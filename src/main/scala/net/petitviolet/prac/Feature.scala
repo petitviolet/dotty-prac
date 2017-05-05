@@ -20,6 +20,7 @@ case class CYMK(c: Int, y: Int, m: Int, k: Int) extends Color(ColorType.CYMK)
 
 trait Feature {
 
+  // union type
   def showColor(colorType: ColorType): RGB | CYMK = {
     colorType match {
       case ColorType.RGB => RGB(1, 2, 3)
@@ -41,8 +42,17 @@ trait Feature {
   // cannnot use singleton type in a union type
 //   type I = 1 | 2 | 3
 
+  // http://docs.scala-lang.org/sips/pending/42.type.html
+//  case class IntRange[Min <: Int : SingleInhabitant, Max <: Int : SingleInhabitant](i: Int) {
+//    {
+//      val min: Int = inhabitant[Min]
+//      val max: Int = inhabitant[Max]
+//      require(i > min && i < max)
+//    }
+//  }
+
+  // without `case`, smart type detection without curry-ing
   def tupleMap[I1, I2, O1, O2](tpes: Seq[(I1, I2)], f1: I1 => O1, f2: I2 => O2): Seq[(O1, O2)] = {
-    // without `case`
 //    tpes map { case (i1, i2) => (f1(i1), f2(i2)) }
     tpes map { (i1, i2) => (f1(i1), f2(i2)) }
   }
@@ -53,7 +63,9 @@ trait Feature {
 class FeatureApp() {}
 
 object FeatureApp extends Feature {
+  // static field, not-singleton
   @static val TAG = "FeatureApp"
+
   def main(args: Array[String]): Unit = {
     println(RGB(1, 2, 3))
     println(showColor(ColorType.RGB))
@@ -65,9 +77,16 @@ object FeatureApp extends Feature {
     println(ints)
     println(TAG.##)
     //  Values of types String and Int cannot be compared with == or !=
+    println(1 == 1)
+    println(1 != 1)
+//    println(1 != "1")
 //    println("1" == 1)
+//    println(1 == "1")
 
     println(tupleMap((1, "hoge") :: (2, "foo") :: Nil, _ * 2, _.length))
+
+//    println(IntRange[1, 100](10))
+//    println(IntRange[50, 100](10))
 
     // place blow `Async` and `async` in `Feature` trait, bring failure to compile.... why???
     type Async[A] = implicit ExecutionContext => Future[A]
