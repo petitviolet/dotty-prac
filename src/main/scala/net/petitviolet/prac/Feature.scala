@@ -39,11 +39,11 @@ trait Feature {
 //  val ints: scala.collection.immutable.List[Int] = 1 :: 1 :: 1 :: Nil
 //  val ints: Seq[1] = 1 :: 1 :: 1 :: Nil
   val ints: Seq[1] = Seq(1, 1, 1)
-  // cannnot use singleton type in a union type
-//   type I = 1 | 2 | 3
+  // cannnot use singleton type in a union type???
+//  type Digits = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
   // http://docs.scala-lang.org/sips/pending/42.type.html
-//  case class IntRange[Min <: Int : SingleInhabitant, Max <: Int : SingleInhabitant](i: Int) {
+//  case class IntRange[Min <: Int : Singleton, Max <: Int : Singleton](i: Int) {
 //    {
 //      val min: Int = inhabitant[Min]
 //      val max: Int = inhabitant[Max]
