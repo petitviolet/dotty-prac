@@ -57,10 +57,36 @@ trait Feature {
     tpes map { (i1, i2) => (f1(i1), f2(i2)) }
   }
 
+
+  // union type
+  type Number = Int | Long | Float | Double
+  def toNumber(s: String): Number = {
+    s.last match {
+      case 'f' => s.toFloat
+      case 'd' => s.toDouble
+      case 'L' => s.slice(0, s.size - 1).toLong
+      case _ => s.toInt
+    }
+  }
+
+  // intersection type
+  trait Cry { def cry() = "cry" }
+  trait Shout { def shout() = "shout" }
+  type Noisy = Cry & Shout
+  val noisy: Noisy = new Cry with Shout {}
+
 }
 
+case class Id[A](value: Int)
+case class IdType[A](value: A)
+case class IdVal[A](value: Int) extends AnyVal
+trait User
+trait Tag
+
 // object that contains @static members should have companion class
-class FeatureApp() {}
+class FeatureApp() {
+
+}
 
 object FeatureApp extends Feature {
   // static field, not-singleton
@@ -75,18 +101,31 @@ object FeatureApp extends Feature {
     println(`42`)
     println(str)
     println(ints)
-    println(TAG.##)
     //  Values of types String and Int cannot be compared with == or !=
-    println(1 == 1)
-    println(1 != 1)
-//    println(1 != "1")
-//    println("1" == 1)
-//    println(1 == "1")
+    assert(1 == 1)
+//    assert(1 != "1") // cannot compile
+    assert(Id[User](1) == Id[User](1))
+    assert(Id[User](1) != Id[User](2))
+    assert(Id[Tag](1) == Id[User](1)) // oops...
+    assert(IdType[User](new User{}) != IdType[Tag](new Tag{}))
+    assert(IdType[Int](1) == IdType[Long](1L)) // oops...
+    assert(1 == 1L) // oops...
 
     println(tupleMap((1, "hoge") :: (2, "foo") :: Nil, _ * 2, _.length))
 
-//    println(IntRange[1, 100](10))
-//    println(IntRange[50, 100](10))
+    assert(toNumber("1.0f") == 1.0f)
+    assert(toNumber("2.0d") == 2.0d)
+    assert(toNumber("3L") == 3L)
+    assert(toNumber("4") == 4)
+    assert(toNumber("4").isInstanceOf[Double]) // oops...
+
+    println(noisy.cry())
+    println(noisy.shout())
+
+    val ids: Seq[Id[User]]= Id[User](1) :: Id[User](2) :: Nil
+    val idVals: Seq[IdVal[User]] = IdVal[User](1) :: IdVal[User](2) :: Nil
+    println(ids)
+    println(idVals)
 
     // place blow `Async` and `async` in `Feature` trait, bring failure to compile.... why???
     type Async[A] = implicit ExecutionContext => Future[A]
@@ -94,6 +133,12 @@ object FeatureApp extends Feature {
     def await[A](aF: Future[A]): A = Await.result(aF, Duration.Inf)
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    println(await(async(10)))
+    val asyncF = async {
+      Thread.sleep(1000)
+      100
+    }
+    println(asyncF)
+
+    println(await { asyncF })
   }
 }
