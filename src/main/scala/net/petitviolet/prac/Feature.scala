@@ -28,6 +28,10 @@ trait Feature {
     }
   }
 
+  implicit class RichOption[A](val opt: Option[A]) {
+    def _fold[B](zero: B, f: A => B): B = opt.fold(zero)(f)
+  }
+
   // unnecessary curry-ing function to type detection
   def map[A, B](seq: Seq[A], f: A => B): Seq[B] = {
     seq map f
@@ -57,6 +61,8 @@ trait Feature {
     tpes map { (i1, i2) => (f1(i1), f2(i2)) }
   }
 
+  def union(flag: Boolean): Int | String = if (flag) 1 else "foo"
+
 
   // union type
   type Number = Int | Long | Float | Double
@@ -70,11 +76,13 @@ trait Feature {
   }
 
   // intersection type
-  trait Cry { def cry() = "cry" }
-  trait Shout { def shout() = "shout" }
-  type Noisy = Cry & Shout
-  val noisy: Noisy = new Cry with Shout {}
-
+  trait A { def foo = "foo" }; trait B { def bar = "bar" }
+  trait HasA { def get: A }; trait HasB { def get: B }
+  type AB = A & B
+  type HasAB = HasA & HasB
+  val ab: HasAB = new HasA with HasB {
+    def get: AB = new A with B {}
+  }
 }
 
 case class Id[A](value: Int)
@@ -93,6 +101,9 @@ object FeatureApp extends Feature {
   @static val TAG = "FeatureApp"
 
   def main(args: Array[String]): Unit = {
+    println(union(true))
+    println(union(false))
+
     println(RGB(1, 2, 3))
     println(showColor(ColorType.RGB))
     println(showColor(ColorType.CYMK))
@@ -112,6 +123,8 @@ object FeatureApp extends Feature {
     assert(1 == 1L) // oops...
 
     println(tupleMap((1, "hoge") :: (2, "foo") :: Nil, _ * 2, _.length))
+    println(Some("hoge")._fold(0, _.size))
+    println(Some("hoge").fold(0){_.size})
 
     assert(toNumber("1.0f") == 1.0f)
     assert(toNumber("2.0d") == 2.0d)
@@ -119,8 +132,9 @@ object FeatureApp extends Feature {
     assert(toNumber("4") == 4)
     assert(toNumber("4").isInstanceOf[Double]) // oops...
 
-    println(noisy.cry())
-    println(noisy.shout())
+    println(ab.get)
+    println(ab.get.foo)
+    println(ab.get.bar)
 
     val ids: Seq[Id[User]]= Id[User](1) :: Id[User](2) :: Nil
     val idVals: Seq[IdVal[User]] = IdVal[User](1) :: IdVal[User](2) :: Nil
@@ -140,5 +154,8 @@ object FeatureApp extends Feature {
     println(asyncF)
 
     println(await { asyncF })
+
+    // cannot compile...
+    // val nullableInt: String? = null
   }
 }
